@@ -21,7 +21,7 @@ from .models import (
     User,
     utcnow,
 )
-from .security import hash_password
+from .security import hash_password, verify_password
 
 DEMO_LAWYER = ("avvocato@demo.ius", "Demo-Avvocato-2026")
 DEMO_ADMIN = ("admin@demo.ius", "Demo-Admin-2026")
@@ -111,8 +111,23 @@ def create_firm_user(
     return user
 
 
-def seed_demo(db: Session, lawyer_password: str = "", admin_password: str = "") -> None:
+def sync_demo_passwords(db: Session, lawyer_password: str, admin_password: str, reset_mfa: bool) -> None:
+    """Le password impostate sul server (es. Render → Environment) valgono anche dopo il primo avvio."""
+    for email, password, is_admin in ((DEMO_LAWYER[0], lawyer_password, False), (DEMO_ADMIN[0], admin_password, True)):
+        user = db.scalar(select(User).where(User.email == email))
+        if user is None:
+            continue
+        if password and not verify_password(password, user.password_hash):
+            user.password_hash = hash_password(password)
+        if is_admin and reset_mfa:
+            user.mfa_enabled = False
+            user.totp_secret = None
+    db.commit()
+
+
+def seed_demo(db: Session, lawyer_password: str = "", admin_password: str = "", reset_mfa: bool = False) -> None:
     if db.scalar(select(User).where(User.email == DEMO_LAWYER[0])):
+        sync_demo_passwords(db, lawyer_password, admin_password, reset_mfa)
         return
     lawyer = create_firm_user(
         db,

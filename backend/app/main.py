@@ -25,7 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with app.state.db.SessionLocal() as db:
             seed_catalog(db)
             if settings.seed_demo:
-                seed_demo(db, settings.demo_lawyer_password, settings.demo_admin_password)
+                seed_demo(db, settings.demo_lawyer_password, settings.demo_admin_password, settings.admin_reset_mfa)
         yield
 
     app = FastAPI(title="IUS Italia AI — Backend", version=__version__, lifespan=lifespan)

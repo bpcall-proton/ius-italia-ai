@@ -57,6 +57,10 @@
       {
         "from": "../backend/dist/ius_server",
         "to": "backend"
+      },
+      {
+        "from": "ius-config.json",
+        "to": "ius-config.json"
       }
     ],
     "asar": true,

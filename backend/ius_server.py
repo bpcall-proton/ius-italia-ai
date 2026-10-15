@@ -15,6 +15,7 @@ def main() -> None:
     parser.add_argument("--data-dir", default=None, help="Cartella per database demo e segreto JWT")
     args = parser.parse_args()
     log_dir = Path.cwd()
+    os.environ.setdefault("IUS_LOCAL_MODE", "1")
     if args.data_dir:
         data = Path(args.data_dir)
         data.mkdir(parents=True, exist_ok=True)

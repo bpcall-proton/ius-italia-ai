@@ -59,3 +59,9 @@ Nota: i dati del browser sono legati a quel browser e a quel PC. Se cancelli i d
 - **Mio AI**: qualsiasi server compatibile con le API OpenAI (`IUS_CUSTOM_AI_URL`, ad es. `http://127.0.0.1:8000/v1`, poi `IUS_CUSTOM_AI_MODEL`, `IUS_CUSTOM_AI_KEY` facoltativa e `IUS_CUSTOM_AI_NAME`). Il modello si può cambiare anche da Admin → Modelli.
 - Se l'indirizzo è locale (127.0.0.1/localhost), il consenso indica che i dati non escono dal PC. Se è remoto, viene trattato come fornitore esterno.
 - Se la porta 8765 è occupata, l'app desktop usa automaticamente la prima porta libera.
+
+## AI centralizzata e crediti
+
+- Tutti gli account usano l'AI dell'amministratore: le chiavi OpenAI e l'indirizzo di Ollama stanno solo sul server centrale. Ogni richiesta scala i crediti dello studio in base ad Admin → Modelli (crediti ogni 1000 token).
+- L'app desktop si collega al server centrale se è impostata la variabile GitHub `IUS_SERVER_URL` (in `ius-config.json`, scritto durante la build) oppure se esiste `%APPDATA%/IUS Italia AI/config.json` con `{ "serverUrl": "https://..." }`. Se non c'è, avvia il server demo locale.
+- Ricarica: l'avvocato chiede i crediti dalla Dashboard, l'admin li approva in "Ricariche crediti" e i crediti vengono accreditati subito. Il pagamento si gestisce fuori dall'app finché non c'è un gateway.

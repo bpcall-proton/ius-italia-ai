@@ -23,7 +23,7 @@ def test_ollama_spento_e_mio_ai_locale(tmp_path):
         prov = {p["name"]: p for p in c.get("/ai/providers", headers=h).json()}
         assert prov["ollama"]["status"] == "non configurato"
         assert prov["custom"]["status"] == "attivo"
-        assert prov["custom"]["external"] is False
+        assert prov["custom"]["external"] is True
         assert prov["custom"]["model"] == "studio-7b"
         r = c.post(
             "/ai/consents",
@@ -43,7 +43,13 @@ def test_ollama_spento_e_mio_ai_locale(tmp_path):
         assert after["credits"] == before["credits"]
 
 
-def test_mio_ai_remoto_richiede_consenso_esterno(tmp_path):
-    with _client(tmp_path, custom_ai_url="https://ai.studio.example/v1", custom_ai_model="m") as c:
+def test_locale_solo_nel_server_embedded(tmp_path):
+    with _client(tmp_path, local_mode=True, custom_ai_url="http://127.0.0.1:9/v1", custom_ai_model="m") as c:
         prov = {p["name"]: p for p in c.get("/ai/providers", headers=login(c)).json()}
-        assert prov["custom"]["external"] is True
+        assert prov["custom"]["external"] is False
+
+
+def test_custom_nascosto_se_non_configurato(tmp_path):
+    with _client(tmp_path) as c:
+        names = [p["name"] for p in c.get("/ai/providers", headers=login(c)).json()]
+        assert "custom" not in names and "ollama" in names

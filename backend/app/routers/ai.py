@@ -81,18 +81,21 @@ def build_provider(request: Request, db: Session, name: str, task: str):
 
 @router.get("/providers")
 def providers(request: Request, p: Principal = Depends(require_firm_user), db: Session = Depends(get_db)) -> list[dict]:
+    s = request.app.state.settings
     out = []
     for name, label, tasks in (
         ("simulation", "Motore dimostrativo a regole (SIMULAZIONE)", ["analyze", "draft"]),
         ("openai", "OpenAI — ragionamento giuridico", ["analyze", "draft"]),
         ("deepseek", "DeepSeek — redazione", ["draft"]),
-        ("ollama", "Ollama — modello sul tuo computer", ["analyze", "draft"]),
-        ("custom", f"{request.app.state.settings.custom_ai_name} — server AI dello studio", ["analyze", "draft"]),
+        ("ollama", "Ollama — AI del servizio IUS (attività ordinarie)", ["analyze", "draft"]),
+        ("custom", f"{s.custom_ai_name} — server AI del servizio IUS", ["analyze", "draft"]),
     ):
+        if name == "custom" and not s.custom_ai_url:
+            continue
         prov, row = build_provider(request, db, name, tasks[0] if name != "deepseek" else "draft")
         ready = prov.configured()
         if name == "ollama" and ready:
-            ready = ollama_models(request.app.state.settings.ollama_url) is not None
+            ready = ollama_models(s.ollama_url) is not None
         out.append(
             {
                 "name": name,
@@ -100,7 +103,7 @@ def providers(request: Request, p: Principal = Depends(require_firm_user), db: S
                 "tasks": tasks,
                 "model": prov.model or None,
                 "status": "attivo" if ready and (row is None or row.enabled) else "non configurato",
-                "external": name != "simulation" and not (name in ("ollama", "custom") and is_local_url(prov.base_url)),
+                "external": name != "simulation" and not (s.local_mode and is_local_url(prov.base_url)),
             }
         )
     return out

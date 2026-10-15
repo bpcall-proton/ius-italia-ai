@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     ollama_url: str = "http://127.0.0.1:11434"
     ollama_model: str = ""
+    local_mode: bool = False
     custom_ai_name: str = "Mio AI"
     custom_ai_url: str = ""
     custom_ai_key: str = ""

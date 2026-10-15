@@ -10,9 +10,24 @@ let PORT = Number(process.env.IUS_BACKEND_PORT || 8765)
 let win = null
 let backend = null
 let vault = null
+let SERVER = ''
+
+function serverUrl() {
+  if (process.env.IUS_BACKEND_URL) return process.env.IUS_BACKEND_URL
+  const files = [path.join(app.getPath('userData'), 'config.json'), path.join(process.resourcesPath || '', 'ius-config.json')]
+  for (const f of files) {
+    try {
+      const u = JSON.parse(fs.readFileSync(f, 'utf8')).serverUrl
+      if (u) return String(u).replace(/\/$/, '')
+    } catch {
+      // file assente: si prova il successivo
+    }
+  }
+  return ''
+}
 
 async function startBackend() {
-  if (process.env.IUS_BACKEND_URL) return
+  if (SERVER) return
   const exe = path.join(process.resourcesPath, 'backend', process.platform === 'win32' ? 'ius_server.exe' : 'ius_server')
   if (!app.isPackaged || !fs.existsSync(exe)) return
   PORT = await findFreePort(PORT)
@@ -131,12 +146,13 @@ function createWindow() {
 }
 
 ipcMain.on('ius:backend-url', (event) => {
-  event.returnValue = process.env.IUS_BACKEND_URL || `http://127.0.0.1:${PORT}`
+  event.returnValue = SERVER || `http://127.0.0.1:${PORT}`
 })
 
 app.whenReady().then(async () => {
   vault = new Vault(path.join(app.getPath('userData'), 'vault'))
   if (app.isPackaged) Menu.setApplicationMenu(null)
+  SERVER = serverUrl()
   await startBackend().catch(() => undefined)
   registerIpc()
   createWindow()

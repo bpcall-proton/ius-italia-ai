@@ -63,7 +63,7 @@ export async function stream(path: string, body: unknown, onEvent: (event: strin
   }
 }
 
-export async function waitBackend(tries = 40): Promise<boolean> {
+export async function waitBackend(tries = 180): Promise<boolean> {
   for (let i = 0; i < tries; i++) {
     try {
       const r = await fetch(`${backendUrl}/health`)

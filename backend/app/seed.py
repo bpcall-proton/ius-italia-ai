@@ -111,13 +111,13 @@ def create_firm_user(
     return user
 
 
-def seed_demo(db: Session) -> None:
+def seed_demo(db: Session, lawyer_password: str = "", admin_password: str = "") -> None:
     if db.scalar(select(User).where(User.email == DEMO_LAWYER[0])):
         return
     lawyer = create_firm_user(
         db,
         email=DEMO_LAWYER[0],
-        password=DEMO_LAWYER[1],
+        password=lawyer_password or DEMO_LAWYER[1],
         first="Mario",
         last="Rossi",
         firm_name="Studio Legale Demo Rossi",
@@ -162,7 +162,7 @@ def seed_demo(db: Session) -> None:
     db.add(
         User(
             email=DEMO_ADMIN[0],
-            password_hash=hash_password(DEMO_ADMIN[1]),
+            password_hash=hash_password(admin_password or DEMO_ADMIN[1]),
             first_name="Admin",
             last_name="IUS",
             role=Role.SUPER_ADMIN,

@@ -16,9 +16,11 @@ function startBackend() {
   if (!app.isPackaged || !fs.existsSync(exe)) return
   const dataDir = path.join(app.getPath('userData'), 'server')
   fs.mkdirSync(dataDir, { recursive: true })
+  const log = fs.openSync(path.join(dataDir, 'ius-server.log'), 'a')
   backend = spawn(exe, ['--host', '127.0.0.1', '--port', String(PORT), '--data-dir', dataDir], {
+    cwd: path.dirname(exe),
     windowsHide: true,
-    stdio: 'ignore',
+    stdio: ['ignore', log, log],
   })
   backend.on('exit', () => (backend = null))
 }

@@ -42,3 +42,13 @@ Installare, avviare *IUS Italia AI*, accedere con l'account di prova, creare la 
 
 L'amministrazione vede solo dati commerciali aggregati: fascicoli, documenti e bozze esistono solo sul computer
 dell'avvocato e il server non ha endpoint per leggerli. Il controllo finale di ogni atto resta all'avvocato.
+
+## Versione online (Render)
+
+L'API e l'app web vengono pubblicate da un unico servizio (`Dockerfile`, `render.yaml`).
+Fascicoli e documenti **non vanno sul server**: restano nel browser del PC dell'utente (IndexedDB), cifrati con AES-256-GCM.
+La chiave master si ricava dalla passphrase con PBKDF2-SHA256 (600.000 iterazioni) e ogni fascicolo ha la sua chiave.
+Sul server restano solo i dati commerciali: account, piani, crediti e consumi.
+
+Render → New → Blueprint → repo `bpcall-proton/ius-italia-ai`. Imposta `IUS_DEMO_ADMIN_PASSWORD` e `IUS_DEMO_LAWYER_PASSWORD` (online le password di prova pubbliche non valgono).
+Nota: i dati del browser sono legati a quel browser e a quel PC. Se cancelli i dati del sito o cambi computer, i fascicoli online non si possono recuperare.

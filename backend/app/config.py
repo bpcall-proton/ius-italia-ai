@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     access_token_minutes: int = 60
     seed_demo: bool = True
     cors_origins: str = "*"
+    web_dir: str = ""
+    demo_lawyer_password: str = ""
+    demo_admin_password: str = ""
 
     openai_api_key: str = ""
     deepseek_api_key: str = ""

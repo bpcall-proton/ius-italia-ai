@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import uuid
+from urllib.parse import urlparse
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -19,7 +21,26 @@ from ..models import AIConsentRecord, AIModel, AIUsageRecord, utcnow
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-TASK_PROVIDERS = {"analyze": ("simulation", "openai"), "draft": ("simulation", "deepseek", "openai")}
+TASK_PROVIDERS = {
+    "analyze": ("simulation", "openai", "ollama", "custom"),
+    "draft": ("simulation", "deepseek", "openai", "ollama", "custom"),
+}
+
+
+def is_local_url(url: str) -> bool:
+    host = urlparse(url).hostname or ""
+    return host in ("127.0.0.1", "localhost", "::1")
+
+
+def ollama_models(url: str) -> list[str] | None:
+    try:
+        r = httpx.get(f"{url.rstrip('/')}/api/tags", timeout=1.5)
+        r.raise_for_status()
+        return [m["name"] for m in r.json().get("models", [])]
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        return None
+
+
 MAX_TOKENS = {"analyze": 6000, "draft": 4000}
 
 
@@ -40,26 +61,49 @@ def build_provider(request: Request, db: Session, name: str, task: str):
             ),
             row,
         )
+    if name == "ollama":
+        model = model or s.ollama_model
+        if not model:
+            model = (ollama_models(s.ollama_url) or [""])[0]
+        return (
+            OpenAICompatibleProvider("ollama", "Ollama (locale)", f"{s.ollama_url.rstrip('/')}/v1", "", model, False),
+            row,
+        )
+    if name == "custom":
+        return (
+            OpenAICompatibleProvider(
+                "custom", s.custom_ai_name, s.custom_ai_url, s.custom_ai_key, model or s.custom_ai_model, False
+            ),
+            row,
+        )
     raise HTTPException(status.HTTP_400_BAD_REQUEST, "Provider sconosciuto")
 
 
 @router.get("/providers")
 def providers(request: Request, p: Principal = Depends(require_firm_user), db: Session = Depends(get_db)) -> list[dict]:
+    s = request.app.state.settings
     out = []
     for name, label, tasks in (
         ("simulation", "Motore dimostrativo a regole (SIMULAZIONE)", ["analyze", "draft"]),
         ("openai", "OpenAI — ragionamento giuridico", ["analyze", "draft"]),
         ("deepseek", "DeepSeek — redazione", ["draft"]),
+        ("ollama", "Ollama — AI del servizio IUS (attività ordinarie)", ["analyze", "draft"]),
+        ("custom", f"{s.custom_ai_name} — server AI del servizio IUS", ["analyze", "draft"]),
     ):
+        if name == "custom" and not s.custom_ai_url:
+            continue
         prov, row = build_provider(request, db, name, tasks[0] if name != "deepseek" else "draft")
+        ready = prov.configured()
+        if name == "ollama" and ready:
+            ready = ollama_models(s.ollama_url) is not None
         out.append(
             {
                 "name": name,
                 "label": label,
                 "tasks": tasks,
                 "model": prov.model or None,
-                "status": "attivo" if prov.configured() and (row is None or row.enabled) else "non configurato",
-                "external": name != "simulation",
+                "status": "attivo" if ready and (row is None or row.enabled) else "non configurato",
+                "external": name != "simulation" and not (s.local_mode and is_local_url(prov.base_url)),
             }
         )
     return out

@@ -97,6 +97,7 @@ export default function Login({ onLogin }: { onLogin: (me: Me) => void }) {
               Password
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </label>
+            {!(window.ius?.web && mode === 'admin') && (
             <button
               type="button"
               className="link"
@@ -107,6 +108,7 @@ export default function Login({ onLogin }: { onLogin: (me: Me) => void }) {
             >
               Usa account di prova ({demo[0]})
             </button>
+            )}
           </>
         ) : (
           <>

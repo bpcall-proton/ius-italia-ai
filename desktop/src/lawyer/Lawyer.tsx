@@ -94,6 +94,7 @@ function Dashboard({ cases, open }: { cases: CaseSummary[]; open: (id: string) =
         <Kpi label="Fascicoli locali" value={cases.length} hint="cifrati su questo computer" />
       </div>
       {acc?.usage.warning && <div className="warning">{acc.usage.warning}</div>}
+      <Topup />
       <Card title="Fascicoli recenti">
         <CaseTable cases={cases.slice(0, 8)} open={open} />
       </Card>
@@ -268,5 +269,50 @@ export default function Lawyer({ me, onLogout }: { me: Me; onLogout: () => void 
         )}
       </main>
     </div>
+  )
+}
+
+interface TopupRow {
+  id: string
+  credits: number
+  status: string
+  created_at: string
+}
+
+function Topup() {
+  const [rows, setRows] = useState<TopupRow[]>([])
+  const [credits, setCredits] = useState(1000)
+  const [error, setError] = useState<string | null>(null)
+  const load = useCallback(() => {
+    api<TopupRow[]>('/credits/topups').then(setRows, (e) => setError(e.message))
+  }, [])
+  useEffect(load, [load])
+  const send = (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    api('/credits/topups', { credits }).then(load, (err) => setError(err.message))
+  }
+  return (
+    <Card title="Ricarica crediti AI">
+      <p className="muted">I crediti si usano per l&apos;AI del servizio IUS (OpenAI e Ollama). La ricarica viene attivata dall&apos;amministrazione.</p>
+      <form className="row" onSubmit={send}>
+        <select value={credits} onChange={(e) => setCredits(Number(e.target.value))}>
+          {[500, 1000, 2500, 5000, 10000].map((n) => (
+            <option key={n} value={n}>
+              {num(n)} crediti
+            </option>
+          ))}
+        </select>
+        <button className="primary" disabled={rows.some((r) => r.status === 'in_attesa')}>
+          Richiedi ricarica
+        </button>
+      </form>
+      <ErrorBox error={error} />
+      {rows.map((r) => (
+        <div key={r.id} className="muted">
+          {num(r.credits)} crediti · {r.status} · {dt(r.created_at)}
+        </div>
+      ))}
+    </Card>
   )
 }

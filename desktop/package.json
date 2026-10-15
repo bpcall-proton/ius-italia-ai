@@ -33,6 +33,7 @@
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^17.13.0",
     "jsdom": "^25.0.1",
     "typescript": "~6.0.2",
@@ -54,11 +55,12 @@
     ],
     "extraResources": [
       {
-        "from": "../backend/dist",
-        "to": "backend",
-        "filter": [
-          "ius_server*"
-        ]
+        "from": "../backend/dist/ius_server",
+        "to": "backend"
+      },
+      {
+        "from": "ius-config.json",
+        "to": "ius-config.json"
       }
     ],
     "asar": true,

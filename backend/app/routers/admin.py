@@ -17,6 +17,7 @@ from ..models import (
     AIModel,
     AIModelPrice,
     AIUsageRecord,
+    CreditTopupRequest,
     CreditWallet,
     LawFirm,
     PlanVersion,
@@ -168,6 +169,53 @@ def add_credits(
     return {"applied": applied, "balance": billing.wallet_for(db, firm_id).balance}
 
 
+@router.get("/topups")
+def topups(p: Principal = Depends(require_admin), db: Session = Depends(get_db)) -> list[dict]:
+    rows = db.execute(
+        select(CreditTopupRequest, LawFirm.name, User.email)
+        .join(LawFirm, LawFirm.id == CreditTopupRequest.firm_id)
+        .join(User, User.id == CreditTopupRequest.user_id)
+        .order_by(CreditTopupRequest.created_at.desc())
+        .limit(200)
+    ).all()
+    return [
+        {
+            "id": t.id,
+            "firm_id": t.firm_id,
+            "firm": firm,
+            "email": email,
+            "credits": t.credits,
+            "status": t.status,
+            "created_at": t.created_at,
+            "decided_at": t.decided_at,
+        }
+        for t, firm, email in rows
+    ]
+
+
+@router.post("/topups/{topup_id}/{decision}")
+def decide_topup(
+    topup_id: str, decision: str, p: Principal = Depends(require_admin_write), db: Session = Depends(get_db)
+) -> dict:
+    if decision not in ("approve", "reject"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Decisione non valida")
+    t = db.get(CreditTopupRequest, topup_id)
+    if t is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Richiesta non trovata")
+    if t.status != "in_attesa":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Richiesta già gestita")
+    t.status = "approvata" if decision == "approve" else "rifiutata"
+    t.decided_at = utcnow()
+    t.decided_by = p.user.id
+    admin_audit(db, p.user.id, f"topup_{decision}", t.firm_id, amount=t.credits)
+    db.commit()
+    if decision == "approve":
+        billing.grant_credits(
+            db, firm_id=t.firm_id, amount=t.credits, reason="ricarica", key=f"topup:{t.id}", by=p.user.id
+        )
+    return {"status": t.status, "balance": billing.wallet_for(db, t.firm_id).balance}
+
+
 @router.get("/plans")
 def admin_plans(p: Principal = Depends(require_admin), db: Session = Depends(get_db)) -> list[dict]:
     out = []
@@ -315,7 +363,7 @@ def models(p: Principal = Depends(require_admin), db: Session = Depends(get_db))
 
 
 class ModelIn(BaseModel):
-    provider: str = Field(pattern="^(openai|deepseek|ollama|simulation)$")
+    provider: str = Field(pattern="^(openai|deepseek|ollama|custom|simulation)$")
     model: str = Field(min_length=1, max_length=100)
     task: str = Field(pattern="^(analyze|draft|any)$")
     enabled: bool = True

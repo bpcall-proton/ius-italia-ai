@@ -125,6 +125,40 @@ function Lawyers() {
   )
 }
 
+function Topups() {
+  const [rows, load, error] = useLoad<Row[]>('/admin/topups')
+  const [err, setErr] = useState<string | null>(null)
+  const decide = (id: unknown, d: 'approve' | 'reject') => api(`/admin/topups/${id}/${d}`, {}).then(load, (e) => setErr(e.message))
+  return (
+    <Card title="Richieste di ricarica crediti">
+      <ErrorBox error={error ?? err} />
+      <Table
+        rows={rows ?? []}
+        cols={[
+          ['firm', 'Studio'],
+          ['email', 'Richiesta da'],
+          ['credits', 'Crediti', (r) => num(r.credits as number)],
+          ['created_at', 'Data', (r) => dt(r.created_at as string)],
+          ['status', 'Stato'],
+          [
+            'actions',
+            '',
+            (r) =>
+              r.status === 'in_attesa' && (
+                <div className="row">
+                  <button className="primary" onClick={() => decide(r.id, 'approve')}>
+                    Approva e accredita
+                  </button>
+                  <button onClick={() => decide(r.id, 'reject')}>Rifiuta</button>
+                </div>
+              ),
+          ],
+        ]}
+      />
+    </Card>
+  )
+}
+
 interface Plan {
   code: string
   name: string
@@ -362,6 +396,7 @@ const VIEWS: [string, string, () => ReactNode][] = [
   ['lawyers', 'Avvocati', Lawyers],
   ['plans', 'Piani e prezzi', Plans],
   ['usage', 'Consumi AI', Usage],
+  ['topups', 'Ricariche crediti', Topups],
   ['models', 'Modelli AI', Models],
   ['audit', 'Audit e sicurezza', Audit],
   ['iso', 'Isolamento dati', Isolation],

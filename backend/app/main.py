@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from .config import Settings, get_settings
@@ -23,7 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with app.state.db.SessionLocal() as db:
             seed_catalog(db)
             if settings.seed_demo:
-                seed_demo(db)
+                seed_demo(db, settings.demo_lawyer_password, settings.demo_admin_password)
         yield
 
     app = FastAPI(title="IUS Italia AI — Backend", version=__version__, lifespan=lifespan)
@@ -47,4 +49,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     for r in (auth.router, account.router, ai.router, admin.router):
         app.include_router(r)
+    if settings.web_dir and (Path(settings.web_dir) / "index.html").is_file():
+        app.mount("/", StaticFiles(directory=settings.web_dir, html=True), name="web")
     return app

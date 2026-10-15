@@ -8,7 +8,7 @@ const call = (channel, ...args) =>
   })
 
 contextBridge.exposeInMainWorld('ius', {
-  backendUrl: process.env.IUS_BACKEND_URL || `http://127.0.0.1:${process.env.IUS_BACKEND_PORT || 8765}`,
+  backendUrl: ipcRenderer.sendSync('ius:backend-url'),
   vault: {
     status: () => call('vault:status'),
     create: (passphrase) => call('vault:create', passphrase),

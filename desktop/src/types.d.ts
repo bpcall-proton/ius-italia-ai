@@ -105,6 +105,7 @@ export interface DraftResult {
 }
 
 interface IusBridge {
+  web?: boolean
   backendUrl: string
   vault: {
     status(): Promise<{ exists: boolean; unlocked: boolean }>

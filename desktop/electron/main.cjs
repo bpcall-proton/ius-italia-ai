@@ -4,21 +4,40 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { spawn } = require('node:child_process')
 const { Vault } = require('./vault.cjs')
+const { findFreePort } = require('./port.cjs')
 
-const PORT = Number(process.env.IUS_BACKEND_PORT || 8765)
+let PORT = Number(process.env.IUS_BACKEND_PORT || 8765)
 let win = null
 let backend = null
 let vault = null
+let SERVER = ''
 
-function startBackend() {
-  if (process.env.IUS_BACKEND_URL) return
+function serverUrl() {
+  if (process.env.IUS_BACKEND_URL) return process.env.IUS_BACKEND_URL
+  const files = [path.join(app.getPath('userData'), 'config.json'), path.join(process.resourcesPath || '', 'ius-config.json')]
+  for (const f of files) {
+    try {
+      const u = JSON.parse(fs.readFileSync(f, 'utf8')).serverUrl
+      if (u) return String(u).replace(/\/$/, '')
+    } catch {
+      // file assente: si prova il successivo
+    }
+  }
+  return ''
+}
+
+async function startBackend() {
+  if (SERVER) return
   const exe = path.join(process.resourcesPath, 'backend', process.platform === 'win32' ? 'ius_server.exe' : 'ius_server')
   if (!app.isPackaged || !fs.existsSync(exe)) return
+  PORT = await findFreePort(PORT)
   const dataDir = path.join(app.getPath('userData'), 'server')
   fs.mkdirSync(dataDir, { recursive: true })
+  const log = fs.openSync(path.join(dataDir, 'ius-server.log'), 'a')
   backend = spawn(exe, ['--host', '127.0.0.1', '--port', String(PORT), '--data-dir', dataDir], {
+    cwd: path.dirname(exe),
     windowsHide: true,
-    stdio: 'ignore',
+    stdio: ['ignore', log, log],
   })
   backend.on('exit', () => (backend = null))
 }
@@ -126,10 +145,15 @@ function createWindow() {
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
 }
 
-app.whenReady().then(() => {
+ipcMain.on('ius:backend-url', (event) => {
+  event.returnValue = SERVER || `http://127.0.0.1:${PORT}`
+})
+
+app.whenReady().then(async () => {
   vault = new Vault(path.join(app.getPath('userData'), 'vault'))
   if (app.isPackaged) Menu.setApplicationMenu(null)
-  startBackend()
+  SERVER = serverUrl()
+  await startBackend().catch(() => undefined)
   registerIpc()
   createWindow()
 })

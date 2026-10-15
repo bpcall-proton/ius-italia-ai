@@ -247,3 +247,16 @@ class AdminAuditLog(Base):
     target: Mapped[str | None] = mapped_column(String(100))
     detail: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CreditTopupRequest(Base):
+    __tablename__ = "credit_topup_requests"
+    __table_args__ = (CheckConstraint("credits > 0"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(ForeignKey("law_firms.id"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    credits: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="in_attesa")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decided_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))

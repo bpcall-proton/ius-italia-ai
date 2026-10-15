@@ -1,6 +1,7 @@
 name: Build Windows
 on:
   workflow_dispatch:
+  pull_request:
   push:
     tags: ['v*']
 permissions:
@@ -17,9 +18,14 @@ jobs:
         run: |
           pip install -r requirements-dev.txt pyinstaller
           pytest -q
-          pyinstaller --onefile --noconsole --name ius_server --collect-submodules app --collect-submodules uvicorn --add-data "app/migrations;app/migrations" ius_server.py
+          pyinstaller --onedir --noconsole --noconfirm --name ius_server --collect-submodules app --collect-submodules uvicorn --add-data "app/migrations;app/migrations" ius_server.py
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - name: Server centrale (variabile IUS_SERVER_URL)
+        if: vars.IUS_SERVER_URL != ''
+        working-directory: desktop
+        shell: bash
+        run: echo "{ \"serverUrl\": \"${{ vars.IUS_SERVER_URL }}\" }" > ius-config.json
       - name: App desktop
         working-directory: desktop
         run: |

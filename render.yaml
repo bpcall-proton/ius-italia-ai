@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: ius-italia-ai
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /health
+    disk:
+      name: ius-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: IUS_ENV
+        value: demo
+      - key: IUS_JWT_SECRET
+        generateValue: true
+      - key: IUS_DEMO_ADMIN_PASSWORD
+        sync: false
+      - key: IUS_DEMO_LAWYER_PASSWORD
+        sync: false

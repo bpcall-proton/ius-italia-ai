@@ -195,8 +195,10 @@ export default function Analysis({
             </p>
             {pending.provider.external ? (
               <div className="warning">I dati indicati verranno inviati al fornitore cloud tramite il server IUS. I documenti del fascicolo non vengono inviati.</div>
-            ) : (
+            ) : pending.provider.name === 'simulation' ? (
               <div className="success">Motore dimostrativo: nessun dato viene inviato a fornitori AI esterni.</div>
+            ) : (
+              <div className="success">Motore AI locale su questo computer: i dati non escono dal PC.</div>
             )}
             <div className="row end">
               <button onClick={() => setPending(null)}>Annulla</button>

@@ -23,7 +23,9 @@ export default function App() {
   if (!ready)
     return (
       <div className="splash">
-        Il servizio locale di IUS non risponde. Riavvia l&apos;applicazione.
+        {window.ius?.web
+          ? 'Il servizio IUS online non risponde. Riprova tra qualche minuto.'
+          : 'Il servizio locale di IUS non risponde. Riavvia l’applicazione.'}
       </div>
     )
   if (!me) return <Login onLogin={setMe} />

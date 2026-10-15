@@ -1,0 +1,27 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Backend
+        working-directory: backend
+        run: |
+          pip install -r requirements-dev.txt
+          ruff check . && ruff format --check .
+          pytest -q
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - name: Desktop
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npx tsc -b && npx vite build

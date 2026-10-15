@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+node_modules/
+desktop/dist/
+desktop/release/
+backend/dist/
+backend/build/
+*.spec
+*.db
+*.db-*
+data/
+.env

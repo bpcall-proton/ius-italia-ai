@@ -1,0 +1,30 @@
+"""Avvio del backend (anche come eseguibile PyInstaller per la modalità demo locale)."""
+
+from __future__ import annotations
+
+import argparse
+import os
+from pathlib import Path
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="IUS Italia AI — server")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--data-dir", default=None, help="Cartella per database demo e segreto JWT")
+    args = parser.parse_args()
+    if args.data_dir:
+        data = Path(args.data_dir)
+        data.mkdir(parents=True, exist_ok=True)
+        os.environ.setdefault("IUS_DATA_DIR", str(data))
+        os.environ.setdefault("IUS_DATABASE_URL", f"sqlite:///{(data / 'ius-demo.db').as_posix()}")
+
+    import uvicorn
+
+    from app.main import create_app
+
+    uvicorn.run(create_app(), host=args.host, port=args.port, log_level="info")
+
+
+if __name__ == "__main__":
+    main()

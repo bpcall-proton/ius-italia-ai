@@ -117,7 +117,8 @@ def sync_demo_passwords(db: Session, lawyer_password: str, admin_password: str, 
         user = db.scalar(select(User).where(User.email == email))
         if user is None:
             continue
-        if password and not verify_password(password, user.password_hash):
+        password = (password or "").strip()
+        if password and not verify_password(user.password_hash, password):
             user.password_hash = hash_password(password)
         if is_admin and reset_mfa:
             user.mfa_enabled = False

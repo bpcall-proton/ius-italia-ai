@@ -25,7 +25,9 @@ jobs:
         if: vars.IUS_SERVER_URL != ''
         working-directory: desktop
         shell: bash
-        run: echo "{ \"serverUrl\": \"${{ vars.IUS_SERVER_URL }}\" }" > ius-config.json
+        env: { IUS_SERVER_URL: '${{ vars.IUS_SERVER_URL }}' }
+        run: |
+          printf '{ "serverUrl": "%s" }\n' "$IUS_SERVER_URL" > ius-config.json
       - name: App desktop
         working-directory: desktop
         run: |

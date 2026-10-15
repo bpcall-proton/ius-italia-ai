@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     web_dir: str = ""
     demo_lawyer_password: str = ""
     demo_admin_password: str = ""
+    admin_reset_mfa: bool = False
 
     openai_api_key: str = ""
     deepseek_api_key: str = ""

@@ -36,3 +36,10 @@ def test_password_cambiata_su_render_vale_al_riavvio(tmp_path):
         assert r.status_code == 200 and r.json().get("mfa_setup_required")
         assert _login(c, DEMO_LAWYER[0], "Nuova-Avv-2026").status_code == 200
         assert _login(c, DEMO_LAWYER[0], DEMO_LAWYER[1]).status_code == 401
+
+
+def test_password_render_con_spazi_o_a_capo(tmp_path):
+    with _app(tmp_path, demo_admin_password="Prima-Admin-2026"):
+        pass
+    with _app(tmp_path, demo_admin_password="Seconda-Admin-2026 \n") as c:
+        assert _login(c, DEMO_ADMIN[0], "Seconda-Admin-2026").status_code == 200

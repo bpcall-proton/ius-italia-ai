@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 
 const CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; " +
-  "connect-src 'self' http://127.0.0.1:* http://localhost:*; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'none'"
+  "connect-src 'self' https://ius-italia-ai.onrender.com http://127.0.0.1:* http://localhost:*; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'none'"
 
 export default defineConfig({
   base: './',

@@ -1,7 +1,7 @@
 {
   "name": "ius-italia-ai",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "IUS Italia AI — piattaforma legal-tech per avvocati e studi legali italiani.",
   "author": "BpCall Srl",
   "main": "electron/main.cjs",

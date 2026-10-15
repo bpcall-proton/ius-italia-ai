@@ -315,7 +315,7 @@ def models(p: Principal = Depends(require_admin), db: Session = Depends(get_db))
 
 
 class ModelIn(BaseModel):
-    provider: str = Field(pattern="^(openai|deepseek|ollama|simulation)$")
+    provider: str = Field(pattern="^(openai|deepseek|ollama|custom|simulation)$")
     model: str = Field(min_length=1, max_length=100)
     task: str = Field(pattern="^(analyze|draft|any)$")
     enabled: bool = True

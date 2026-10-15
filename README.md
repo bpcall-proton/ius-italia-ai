@@ -52,3 +52,10 @@ Sul server restano solo i dati commerciali: account, piani, crediti e consumi.
 
 Render → New → Blueprint → repo `bpcall-proton/ius-italia-ai`. Imposta `IUS_DEMO_ADMIN_PASSWORD` e `IUS_DEMO_LAWYER_PASSWORD` (online le password di prova pubbliche non valgono).
 Nota: i dati del browser sono legati a quel browser e a quel PC. Se cancelli i dati del sito o cambi computer, i fascicoli online non si possono recuperare.
+
+## Motori AI: Ollama e "Mio AI"
+
+- **Ollama** (`IUS_OLLAMA_URL`, predefinito `http://127.0.0.1:11434`; `IUS_OLLAMA_MODEL` è facoltativo e, se manca, si usa il primo modello installato). Ollama risulta attivo solo se risponde: nell'app desktop il caso resta sul PC.
+- **Mio AI**: qualsiasi server compatibile con le API OpenAI (`IUS_CUSTOM_AI_URL`, ad es. `http://127.0.0.1:8000/v1`, poi `IUS_CUSTOM_AI_MODEL`, `IUS_CUSTOM_AI_KEY` facoltativa e `IUS_CUSTOM_AI_NAME`). Il modello si può cambiare anche da Admin → Modelli.
+- Se l'indirizzo è locale (127.0.0.1/localhost), il consenso indica che i dati non escono dal PC. Se è remoto, viene trattato come fornitore esterno.
+- Se la porta 8765 è occupata, l'app desktop usa automaticamente la prima porta libera.

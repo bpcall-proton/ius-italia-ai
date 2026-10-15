@@ -69,32 +69,39 @@ DRAFT_SYSTEM = (
 
 
 class OpenAICompatibleProvider:
-    """Adapter per API compatibili Chat Completions (OpenAI, DeepSeek)."""
+    """Adapter per API compatibili Chat Completions (OpenAI, DeepSeek, Ollama, server propri)."""
 
-    def __init__(self, name: str, label: str, base_url: str, api_key: str, model: str) -> None:
+    def __init__(
+        self, name: str, label: str, base_url: str, api_key: str, model: str, require_key: bool = True
+    ) -> None:
         self.name = name
         self.label = label
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
+        self.require_key = require_key
 
     def configured(self) -> bool:
-        return bool(self.api_key and self.model)
+        return bool(self.base_url and self.model and (self.api_key or not self.require_key))
 
     async def _chat(self, system: str, user: str) -> tuple[dict, Usage, int]:
         if not self.configured():
             raise ProviderUnavailable(f"{self.name} non configurato (manca la API key o il modello)")
         t0 = time.monotonic()
-        async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json={
-                    "model": self.model,
-                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                    "response_format": {"type": "json_object"},
-                },
-            )
+        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        try:
+            async with httpx.AsyncClient(timeout=300) as client:
+                resp = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json={
+                        "model": self.model,
+                        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                        "response_format": {"type": "json_object"},
+                    },
+                )
+        except httpx.HTTPError as exc:
+            raise ProviderUnavailable(f"{self.name}: servizio non raggiungibile") from exc
         if resp.status_code >= 400:
             raise ProviderUnavailable(f"{self.name}: errore HTTP {resp.status_code}")
         body = resp.json()

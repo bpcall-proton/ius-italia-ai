@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     deepseek_base_url: str = "https://api.deepseek.com"
     openai_base_url: str = "https://api.openai.com/v1"
     ollama_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = ""
+    custom_ai_name: str = "Mio AI"
+    custom_ai_url: str = ""
+    custom_ai_key: str = ""
+    custom_ai_model: str = ""
 
     def resolved_jwt_secret(self) -> str:
         if self.jwt_secret:

@@ -4,16 +4,18 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { spawn } = require('node:child_process')
 const { Vault } = require('./vault.cjs')
+const { findFreePort } = require('./port.cjs')
 
-const PORT = Number(process.env.IUS_BACKEND_PORT || 8765)
+let PORT = Number(process.env.IUS_BACKEND_PORT || 8765)
 let win = null
 let backend = null
 let vault = null
 
-function startBackend() {
+async function startBackend() {
   if (process.env.IUS_BACKEND_URL) return
   const exe = path.join(process.resourcesPath, 'backend', process.platform === 'win32' ? 'ius_server.exe' : 'ius_server')
   if (!app.isPackaged || !fs.existsSync(exe)) return
+  PORT = await findFreePort(PORT)
   const dataDir = path.join(app.getPath('userData'), 'server')
   fs.mkdirSync(dataDir, { recursive: true })
   const log = fs.openSync(path.join(dataDir, 'ius-server.log'), 'a')
@@ -128,10 +130,14 @@ function createWindow() {
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
 }
 
-app.whenReady().then(() => {
+ipcMain.on('ius:backend-url', (event) => {
+  event.returnValue = process.env.IUS_BACKEND_URL || `http://127.0.0.1:${PORT}`
+})
+
+app.whenReady().then(async () => {
   vault = new Vault(path.join(app.getPath('userData'), 'vault'))
   if (app.isPackaged) Menu.setApplicationMenu(null)
-  startBackend()
+  await startBackend().catch(() => undefined)
   registerIpc()
   createWindow()
 })
